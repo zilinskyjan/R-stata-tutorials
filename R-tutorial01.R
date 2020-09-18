@@ -54,6 +54,13 @@ CD %>% summarise(number_of_districts = n())
 
 CD %>% tally()
 
+# Any missing values?
+sum(complete.cases(CD))
+
+dim(CD)
+
+# Where are the missing values?
+colSums(is.na(CD))
 
 
 # Let's list the KEY VERBS
@@ -217,4 +224,7 @@ CD %>% filter(is.na(`2018 winner party`))
 CD %>% filter(state=="NC") %>% relocate(`2018 winner party`)
 
 CD %>% filter(state=="NC") %>% relocate(`2018 winner party`) %>%
-  mutate_if(CD=="NC-09",`2018 winner party`="R")
+  mutate(`2018 winner party` = ifelse(CD=="NC-09","R",`2018 winner party`))
+
+
+
