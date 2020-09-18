@@ -20,11 +20,21 @@ CD <- readr::read_csv("https://raw.githubusercontent.com/zilinskyjan/citylab-dat
 
 head(CD)
 
+# Move the variables you are interested in the left:
+CD %>% select(CD, Clinton16, everything())
+
+CD %>% relocate(CD, Clinton16)
+
 # To see the names of all variables:  
 names(CD)
 
 # For manual inspection, run:
 # View(CD)
+
+# Reordering rows:
+CD %>% arrange(Clinton16) %>% relocate(Clinton16)
+
+CD %>% arrange(-Clinton16) %>% relocate(Clinton16)
 
 # How are the district classified and how many districts of each type do we have in the data?
 table(CD$Cluster)
@@ -59,8 +69,6 @@ CD %>% summarise(avg_HRC_vote_share = mean(Clinton16))
 
 # Where was HRC's vote at its minimum? Would this work?
 CD %>% summarise(min_HRC_vote_share = min(Clinton16))
-
-CD %>% arrange(Clinton16)
 
 # Prepare summaries by district type
 CD %>% group_by(Cluster) %>%
