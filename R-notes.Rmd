@@ -1,0 +1,6 @@
+---
+title: "What R users should know"
+output: html_notebook
+---
+
+- [r - dplyr::select function clashes with MASS::select - Stack Overflow](https://stackoverflow.com/questions/24202120/dplyrselect-function-clashes-with-massselect)
