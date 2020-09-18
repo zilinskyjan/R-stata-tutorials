@@ -90,9 +90,13 @@ CD %>% group_by(Cluster) %>%
 # GENERATING NEW VARIABLES (as a function of what we already have)
 ##########################
 # Create a binary variable conveying the district is "safe Democratic"
-CD %>% mutate(Clinton16_over70 = ifelse(Clinton16 >= .7,1,0))
+CD %>% mutate(Clinton16_over70_string = ifelse(Clinton16 >= .7,"Safe","Not safe")) %>%
+  slice_sample(n=10) %>%
+  relocate(CD,Clinton16,Clinton16_over70_string)
 
-CD <- CD %>% mutate(Clinton16_over70 = ifelse(Clinton16 >= .7,1,0))
+CD %>% mutate(Clinton16_over70 = Clinton16 >= .7)
+
+CD <- CD %>% mutate(Clinton16_over70 = Clinton16 >= .7)
 
 # Check 3 randomly selected district from each group:
 CD %>% group_by(Clinton16_over70) %>% 
@@ -189,4 +193,28 @@ CD %>% group_by(state,Cluster) %>% summarise(HRC = median(Clinton16),
                                      DJT = median(Trump16),
                                      n = n())
 
+###############################
+# 2018 Congressional elections
+###############################
+
 # Number of Democratic incumbents by state?
+CD %>% count(`Pre-2018 party`)
+
+# How many Democrats and Republicans were re-elected?
+CD %>% count(`Pre-2018 party`,`2018 winner party`)
+
+# Calculate proportions
+CD %>% count(`Pre-2018 party`,`2018 winner party`) %>%
+  mutate(prop = n / sum(n))
+
+# What about the missing results for one district? Where is it?
+CD %>% filter(is.na(`2018 winner party`))
+
+# There were ballot-harvesting problems in NC-09, and a new election had to be called
+# ... what happened next, a Republican won
+
+# So, we can update the dataset:
+CD %>% filter(state=="NC") %>% relocate(`2018 winner party`)
+
+CD %>% filter(state=="NC") %>% relocate(`2018 winner party`) %>%
+  mutate_if(CD=="NC-09",`2018 winner party`="R")
