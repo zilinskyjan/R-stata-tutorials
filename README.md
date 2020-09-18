@@ -15,9 +15,9 @@ R is the winner.
 
 STATA: Some people will say "why would you pay for Stata?" Or "why would you pay for software that does LESS THAN R?" These are reasonable questions but don't forget that there are also upsides to using software with a *finite set of commands*. 
 
-**Again, Stata is more likely to do what you expect it to do.**
+**Stata is more likely to do what you expect it to do.** And that blessing comes with a price tag. 
 
-R: The benefits of countless packages and user-written functions (that don't require $) are... undeniable. But not every package you install will behave exactly as advertised. And, unless you're experienced, it's not optimal to face 10 choices when trying to accomplish a computationally uncomplicated task.
+R: The benefits of countless packages and user-written functions (that don't require $) are undeniable. But not every package you install will behave exactly as advertised. And, unless you're experienced, it's not optimal to face 10 choices when trying to accomplish a computationally uncomplicated task.
 
 ### Related: Simplicity considerations
 
