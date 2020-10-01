@@ -3,6 +3,7 @@ library(tidyverse)
 CD <- readr::read_csv("https://raw.githubusercontent.com/zilinskyjan/citylab-data/master/citylab-congress/citylab_cdi_extended.csv")
 # Change variable name "CD" to "District"
 CD <- rename(CD, `District` = `CD`)
+CD$state <- substr(CD$District,1,2) 
 
 
 # Inspect individual rows and cells
@@ -37,19 +38,6 @@ CD %>% filter(District=="NY-14") %>% dplyr::select(Clinton16)
 CD %>% filter(District=="NC-09") %>% dplyr::select(Clinton16)
 
 
-# Looking at state-level observations
-#####################################
-library(stringr)
-CD %>% filter(str_detect(District,"NY"))
-
-CD %>% filter(grepl("NY",District))
-
-# Usually a better choice: generate a new variable
-substr(CD$District,1,2) 
-
-CD$state <- substr(CD$District,1,2) 
-
-View(CD)
 
 # Average performance by state?
 CD %>% group_by(state) %>% summarise(HRC = mean(Clinton16),
@@ -76,47 +64,100 @@ CD %>% mutate(avg_HRC_vote_share = mean(Clinton16)) %>%
 CD %>% mutate(avg_HRC_vote_share_national = mean(Clinton16)) %>%
   select(1,2,Clinton16,avg_HRC_vote_share_national)
 
+# Or you can run
+CD %>% mutate(avg_HRC_vote_share_national = mean(Clinton16)) %>%
+  relocate(1,2,Clinton16,avg_HRC_vote_share_national)
+
 # What else do we need?
 CD %>% mutate(avg_HRC_vote_share_national = mean(Clinton16)) %>%
   select(1,2,Clinton16,avg_HRC_vote_share_national) %>%
   mutate(relative_performance = Clinton16 - avg_HRC_vote_share_national) 
 
-(plot1 <- CD %>% mutate(avg_HRC_vote_share_national = mean(Clinton16)) %>%
+# Prepare data for plotting
+toPlot1 <- CD %>% mutate(avg_HRC_vote_share_national = mean(Clinton16)) %>%
     select(1,2,Clinton16,avg_HRC_vote_share_national) %>%
     mutate(relative_performance = Clinton16 - avg_HRC_vote_share_national) %>% 
-    select(relative_performance) %>%
+    select(relative_performance) 
+  
+p <- toPlot1 %>%
     ggplot(aes(x=relative_performance)) +
     geom_histogram(colour = '#CCCCCC',fill = '#3173B0',size = .5,linetype = 1,alpha = 0.6) +
     theme_minimal() +
-    labs(y= "Number of districts", x = "Relative Clinton performance compared to the average"))
+    labs(y= "Number of districts", x = "Relative Clinton performance compared to the average")
 
-# library('ggedit')
-# ggedit(plot1)
+p
 
 
-###############################
-# 2018 Congressional elections
-###############################
 
-# Number of Democratic incumbents by state?
-CD %>% count(`Pre-2018 party`)
+############################
+# Let's merge in more data:
+############################
 
-# How many Democrats and Republicans were re-elected?
-CD %>% count(`Pre-2018 party`,`2018 winner party`)
+library(haven)
+addtional_data <- read_dta("https://github.com/zilinskyjan/R-stata-tutorials/blob/master/data/CD_voteshares_demos_2016_18.dta?raw=true")
+# Join by the variable identifying each district
+addtional_data <- addtional_data %>% rename(District = cd)
 
-# Calculate proportions
-CD %>% count(`Pre-2018 party`,`2018 winner party`) %>%
-  mutate(prop = n / sum(n))
+addtional_data %>% relocate(District)
 
-# What about the missing results for one district? Where is it?
-CD %>% filter(is.na(`2018 winner party`))
+CD2 <- left_join(CD,addtional_data,by="District")
 
-# There were ballot-harvesting problems in NC-09, and a new election had to be called
-# ... what happened next, a Republican won
+names(CD2)
 
-# So, we can update the dataset:
-CD %>% filter(state=="NC") %>% relocate(`2018 winner party`)
+CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
+                                       DJT = mean(Trump16),
+                                       college_grad = mean(prop_college_acs201418,na.rm=T))
 
-CD %>% filter(state=="NC") %>% relocate(`2018 winner party`) %>%
-  mutate(`2018 winner party` = ifelse(District=="NC-09","R",`2018 winner party`))
 
+# Bar chart
+###########
+
+CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
+                                        DJT = mean(Trump16),
+                                        college_grad = mean(prop_college_acs201418,na.rm=T)) %>%
+  ggplot(aes(x=Cluster,y=HRC)) +
+  geom_bar(stat="identity") 
+
+CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
+                                        DJT = mean(Trump16),
+                                        college_grad = mean(prop_college_acs201418,na.rm=T)) %>%
+  ggplot(aes(x=Cluster,y=HRC)) +
+  geom_bar(stat="identity",width=.3,fill="steelblue") +
+  theme_minimal()
+
+
+# Scatterplots
+##############
+
+CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
+                                        DJT = mean(Trump16),
+                                        college_grad = mean(prop_college_acs201418,na.rm=T)) %>%
+  ggplot(aes(y=HRC,x=college_grad)) +
+  geom_point()
+
+
+CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
+                                        DJT = mean(Trump16),
+                                        college_grad = mean(prop_college_acs201418,na.rm=T)) %>%
+  ggplot(aes(y=HRC,x=college_grad,label=Cluster)) +
+  geom_point() + 
+  geom_text(aes(),hjust=0, vjust=0) # or try hjust=0=.5
+
+
+# Postion the labels better:
+
+library(ggrepel)
+
+scatterplot <- CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
+                                        DJT = mean(Trump16),
+                                        college_grad = mean(prop_college_acs201418,na.rm=T)) %>%
+  ggplot(aes(y=HRC,x=college_grad,label=Cluster)) +
+  geom_point() +
+  geom_text_repel() 
+
+# Add labels
+
+# + labs(x = "", y = "")
+
+library(ggedit)
+ggedit(scatterplot)
