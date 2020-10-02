@@ -129,4 +129,21 @@ CD_new %>% filter(Clinton16_over70==1) %>%
 
 
 
+######################################
+# Looking at state-level observations
+#####################################
+library(stringr)
 
+CD %>% filter(str_detect(District,"NC"))
+
+CD %>% filter(grepl("NC",District))
+
+# Usually a better choice: generate a new variable
+substr(CD$District,1,2) 
+
+CD$state <- substr(CD$District,1,2) 
+
+CD %>% filter(state=="NC") %>% relocate(`2018 winner party`)
+
+# So there appears to have been a problem in NC-09:
+# NEXT time, we'll see how to fix it.

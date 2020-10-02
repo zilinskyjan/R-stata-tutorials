@@ -126,6 +126,7 @@ CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
   theme_minimal()
 
 
+##############
 # Scatterplots
 ##############
 
@@ -144,7 +145,7 @@ CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
   geom_text(aes(),hjust=0, vjust=0) # or try hjust=0=.5
 
 
-# Postion the labels better:
+# Position the labels better:
 
 library(ggrepel)
 
