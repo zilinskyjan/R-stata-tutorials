@@ -6,6 +6,17 @@ CD <- rename(CD, `District` = `CD`)
 CD$state <- substr(CD$District,1,2) 
 
 
+# Distribution of district types
+
+table(CD$Cluster)
+
+# Alternatively
+
+CD %>% count(Cluster)
+
+CD %>% count(Cluster) %>% mutate(proportion = n / sum(n))
+
+
 # Inspect individual rows and cells
 ###############################################
 ## a) How well did Clinton do in 2016 in NY-14?
@@ -61,8 +72,8 @@ CD %>% mutate(avg_HRC_vote_share = mean(Clinton16)) %>%
   select(1,2,Clinton16,avg_HRC_vote_share)
 
 # Calculate relative performance
-CD %>% mutate(avg_HRC_vote_share_national = mean(Clinton16)) %>%
-  select(1,2,Clinton16,avg_HRC_vote_share_national)
+# CD %>% mutate(avg_HRC_vote_share_national = mean(Clinton16)) %>%
+#   select(1,2,Clinton16,avg_HRC_vote_share_national)
 
 # Or you can run
 CD %>% mutate(avg_HRC_vote_share_national = mean(Clinton16)) %>%
@@ -78,6 +89,8 @@ toPlot1 <- CD %>% mutate(avg_HRC_vote_share_national = mean(Clinton16)) %>%
     select(1,2,Clinton16,avg_HRC_vote_share_national) %>%
     mutate(relative_performance = Clinton16 - avg_HRC_vote_share_national) %>% 
     select(relative_performance) 
+
+toPlot1
   
 p <- toPlot1 %>%
     ggplot(aes(x=relative_performance)) +
@@ -95,8 +108,13 @@ p
 
 library(haven)
 addtional_data <- read_dta("https://github.com/zilinskyjan/R-stata-tutorials/blob/master/data/CD_voteshares_demos_2016_18.dta?raw=true")
+
+names(addtional_data)
+
 # Join by the variable identifying each district
 addtional_data <- addtional_data %>% rename(District = cd)
+
+names(addtional_data)
 
 addtional_data %>% relocate(District)
 
@@ -109,26 +127,28 @@ CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
                                        college_grad = mean(prop_college_acs201418,na.rm=T))
 
 
-# Bar chart
-###########
+# Basic Regressions
 
-CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
-                                        DJT = mean(Trump16),
-                                        college_grad = mean(prop_college_acs201418,na.rm=T)) %>%
-  ggplot(aes(x=Cluster,y=HRC)) +
-  geom_bar(stat="identity") 
+reg1 <- lm(Clinton16 ~ prop_white_acs201418, data = CD2)
 
-CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
-                                        DJT = mean(Trump16),
-                                        college_grad = mean(prop_college_acs201418,na.rm=T)) %>%
-  ggplot(aes(x=Cluster,y=HRC)) +
-  geom_bar(stat="identity",width=.3,fill="steelblue") +
-  theme_minimal()
+# One numerical independent variables + 1 factor (categorical) variable:
 
+reg2 <- lm(Clinton16 ~ prop_white_acs201418 +
+           factor(Cluster), data = CD2)
+
+summary(reg1)
+
+summary(reg2)
 
 ##############
 # Scatterplots
 ##############
+
+ggplot(CD2,aes(x=prop_white_acs201418,y=Clinton16))
+
+ggplot(CD2,aes(x=prop_white_acs201418,y=Clinton16)) + geom_point()
+
+
 
 CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
                                         DJT = mean(Trump16),
@@ -150,11 +170,33 @@ CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
 library(ggrepel)
 
 scatterplot <- CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
-                                        DJT = mean(Trump16),
-                                        college_grad = mean(prop_college_acs201418,na.rm=T)) %>%
+                                                       DJT = mean(Trump16),
+                                                       college_grad = mean(prop_college_acs201418,na.rm=T)) %>%
   ggplot(aes(y=HRC,x=college_grad,label=Cluster)) +
   geom_point() +
   geom_text_repel() 
+
+scatterplot
+
+
+# Bar chart
+###########
+
+CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
+                                        DJT = mean(Trump16),
+                                        college_grad = mean(prop_college_acs201418,na.rm=T)) %>%
+  ggplot(aes(x=Cluster,y=HRC)) +
+  geom_bar(stat="identity") 
+
+CD2 %>% group_by(Cluster) %>% summarise(HRC = mean(Clinton16),
+                                        DJT = mean(Trump16),
+                                        college_grad = mean(prop_college_acs201418,na.rm=T)) %>%
+  ggplot(aes(x=Cluster,y=HRC)) +
+  geom_bar(stat="identity",width=.3,fill="steelblue") +
+  theme_minimal()
+
+
+
 
 # Add labels
 
