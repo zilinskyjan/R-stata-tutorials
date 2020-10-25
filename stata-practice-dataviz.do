@@ -23,15 +23,23 @@ drop if year <= 2012
 summ pctminbachelor25to34
 
 reg rep_vs pctminbachelor25to34
+
+margins, at(pctminbachelor25to34=(50))
+
 margins, at(pctminbachelor25to34=(0(10)90))
+
+margins, at(pctminbachelor25to34=(0 10 20 30 40 50 60 70 80 90))
 
 marginsplot
 
 marginsplot, title("Predicted Trump vote share in 2016") name(fig1)
+* gr export figure.png
 
 scatter rep_vs pctminbachelor25to34, name(fig2)
 
-gr combine fig1 fig2
+graph combine fig1 fig2
+* gr export panel-2-figure.png
+
 
 * Subsetting the observations to be displayed
 summ urbanshare, det
@@ -41,24 +49,34 @@ scatter rep_vs pctminbachelor25to34 if  urbanshare <= 10.97, title("25% least ur
 * Overlaying two scatterplots
 twoway /// 
 	(scatter rep_vs pctminbachelor25to34 if statecode=="PA", mcol(purple)) ///
-	(scatter rep_vs pctminbachelor25to34 if statecode=="FL")
+	(scatter rep_vs pctminbachelor25to34 if statecode=="FL") /// 
+	(scatter rep_vs pctminbachelor25to34 if statecode=="MI")
+
 
 	
-	
-* Create a categorical variable
+* Create a categorical variable - 5 quintiles
 xtile lfp_Q5 = lfp, n(5)
 
 tab lfp_Q5
 
+tabstat lfp, by(lfp_Q5) s(mean N)
+
+
 graph bar (mean) rep_vs, over(lfp_Q5)
 
 recode lfp_Q5 (1=1 "Lowest LFP") (2=2 "2nd quintile") (3=3 "Middle quintile") ///
-	(4=4 "4th quintile") (5=5 "Top quintile"), gen (lfp_Q5_labelled)
+	(4=4 "4th quintile") (5=5 "Top quintile"), gen(lfp_Q5_labelled)
 
-graph bar (mean) rep_vs, over(lfp_Q5_labelled)
+tab lfp_Q5_labelled
 
-* Extending the regression
-reg rep_vs pctminbachelor25to34 ib3.lfp_Q5_labelled
+graph bar (mean) rep_vs, over(lfp_Q5_labelled) ytitle("Rep. vote share")
+gr export "bar-chart-voting.png"
+
+* Extending our regression
+* NOTE: 	The 1st independent variable is continuous
+*			The 2nd independent variable is categorical
+*			So you should not use "lfp_Q5_labelled" -- rather, use the "i." operator!
+reg rep_vs pctminbachelor25to34 i.lfp_Q5_labelled
 
 coefplot, drop(_cons)
 
