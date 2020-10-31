@@ -1,0 +1,228 @@
+---
+title: "PS - Oct. Solutions"
+author: "JZ"
+date: ""
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(haven)
+exit <- read_dta("https://github.com/zilinskyjan/R-stata-tutorials/blob/master/homework/31116399_Florida%202018.dta?raw=true")
+```
+
+# R Answers
+
+## Part A: Descriptives
+
+1. How many respondents were 65 years old or older? What was their proportion in the sample?
+
+One option:
+
+```{r}
+exit %>% count(AGE65)
+
+# Another option:
+# exit %>% count(AGE8)
+```
+
+Add a column with proportions:
+
+```{r}
+exit %>% 
+  count(AGE65) %>%
+  mutate(proportion = n / sum(n))
+```
+
+Another possibility:
+
+```{r}
+table(exit$AGE65)
+```
+
+```{r}
+table(exit$AGE65) / sum(table(exit$AGE65))
+```
+
+
+Even better to run:
+
+```{r}
+exit %>% 
+  count(AGE65) %>%
+  filter(!is.na(AGE65)) %>%
+  mutate(proportion = n / sum(n))
+```
+
+
+2. What was the proportion of Hispanic respondents who:
+
+- Lived in cities with pop. over 50,000?
+- Lived in suburbs?
+- Lived in small cities or rural areas?
+
+(Hint: Look at the variation in the variable labeled `SIZEPLC3`.)
+
+```{r}
+exit %>% filter(latino==1) %>%
+  group_by(SIZEPLC3) %>% 
+  summarize(n = n()) %>%
+  mutate(proportion = n / sum(n))
+```
+
+Alternative code:
+
+```{r}
+exit %>% filter(latino==1) %>%
+  group_by(SIZEPLC3) %>% 
+  tally() %>%
+  mutate(proportion = n / sum(n))
+```
+```
+
+3. Prepare a table displaying the proportion of voters who said they were first-time (midterm election) voters, broken down by gender.
+
+```{r}
+exit %>% group_by(FTVOTER1) %>% tally()
+```
+
+```{r}
+exit %>% group_by(FTVOTER1,sex) %>% 
+    filter(!is.na(FTVOTER1),!is.na(sex)) %>%
+    tally() %>%
+    mutate(prop = n / sum(n))
+```
+
+Why is it important to remove the missing observations from the denominator?
+
+- Most student correctly say that 78 of male voters were first-time voters.
+- But we cannot divide 78 by the total number of male respondents (1398).
+- Rather, we must divide 78 by 427 (i.e. the number of male respondents for who we know their FT-voting status).
+
+```{r}
+exit %>% count(sex)
+```
+
+```{r}
+exit %>% filter(!is.na(FTVOTER1)) %>% count(sex)
+```
+
+
+
+
+4. What was the proportion of Democrats who said in 2018 that Donald Trump should not be impeached and removed from office?
+
+```{r}
+exit %>% count(party,IMPEACH1)
+```
+
+Let's limit our attention to Democrats:
+
+```{r}
+exit %>% count(party,IMPEACH1) %>% filter(party==1)
+```
+
+## Part B
+
+1. Is there an association between 2016 vote choice and the type of area where a voter lives? 
+
+```{r}
+exit %>% count(SIZEPLC3,VOTE2016)
+```
+
+Run a regression:
+
+```{r}
+exit$votedForCliton2016 <- ifelse(exit$VOTE2016==1,1,0)
+
+model_vote <- lm(votedForCliton2016 ~ factor(SIZEPLC3), data= exit)
+```
+
+
+2. What percentage of voters said that when choosing their candidate for the US Senate, "Donald Trump was not a factor"?
+
+```{r}
+exit %>% count(fortrump)
+```
+
+
+3. What percentage voters said that, in their vote for the US Senate, Bill Nelson's vote against Brett Kavanaugh's confirmation "not a factor at all?"
+
+```{r}
+exit %>% count(KAVFL18)
+```
+
+## Part C:
+
+```{r}
+exit$motivated <- ifelse(exit$RUSSIA18==2,1,0)
+```
+
+```{r}
+exit <- exit %>% mutate(politcally_motivated = ifelse(RUSSIA18==2,1,0))
+```
+
+
+Note: Republicans are `party==2`:
+
+```{r}
+mod <- lm(motivated ~ factor(party) + factor(AGE8),
+              data = exit %>% filter(!is.na(RUSSIA18)))
+```
+
+```{r}
+summary(mod)
+```
+
+What are the key things to notice here?
+
+* Higher values of `party` do not mean that a respondent is "more Republican".
+* The values are not ordered in a meaningful way (1 = Democrat; 2 = Republican; 3 = "Independent).
+* Even if the values were ordered in an ideological manner, it still doesn't mean that treating the variable as continuous is necessarily a defensible choice.
+* The values are unordered, so you *must* include a series of indicator/dummy variables, if you wish to control for partisanship.
+* One way to achieve that is to add `factor(party)` to your regression forumula.
+
+
+
+\pagebreak  
+
+# STATA Answers
+
+`tab AGE8 or tab AGE65`
+
+`gen hispanic = (latino==1) if !mi(latino)`
+
+`tabstat hispanic, by(SIZEPLC3)`
+
+`tab FTVOTER1 sex`
+
+`tab party IMPEACH1, row nof`
+
+
+
+## Part B:
+
+B1: `tab SIZEPLC3 VOTE2016 [aw=weight], row nof  `
+
+B2: `tab fortrump`
+
+B3: `tab KAVFL18`
+
+## Part C:
+
+`gen motivated = (RUSSIA18==2) if !mi(RUSSIA18)`
+
+`reg motivated i.AGE8 ib3.party`
+
+It is important to note that:
+
+* Higher values of party do not mean that a respondent is "more Republican".
+* The values are of the variable not ordered in a meaningful way (1 = Democrat; 2 = Republican; 3 = "Independent). And even if the values were ordered ideologically, it still doesn't mean that treating the variable as continuous is necessarily a defensible choice.
+* Given that the values are unordered, then you *must* include a series of indicator/dummy variables.
+* One way to achieve that is to use the "i." operator.
+
