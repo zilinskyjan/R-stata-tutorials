@@ -1,6 +1,6 @@
 ---
-title: "PS - Oct. Solutions"
-author: "JZ"
+title: "Florida 2018 Exit Polls Problem Set"
+author: "Solutions"
 date: ""
 output: pdf_document
 ---
@@ -83,7 +83,6 @@ exit %>% filter(latino==1) %>%
   tally() %>%
   mutate(proportion = n / sum(n))
 ```
-```
 
 3. Prepare a table displaying the proportion of voters who said they were first-time (midterm election) voters, broken down by gender.
 
@@ -111,8 +110,6 @@ exit %>% count(sex)
 ```{r}
 exit %>% filter(!is.na(FTVOTER1)) %>% count(sex)
 ```
-
-
 
 
 4. What was the proportion of Democrats who said in 2018 that Donald Trump should not be impeached and removed from office?
@@ -187,6 +184,21 @@ What are the key things to notice here?
 * The values are unordered, so you *must* include a series of indicator/dummy variables, if you wish to control for partisanship.
 * One way to achieve that is to add `factor(party)` to your regression forumula.
 
+Of course, you can create binary variables:
+
+```{r}
+exit$democrat <- ifelse(exit$party==1, 1, 0)
+exit$republican <- ifelse(exit$party==2, 1, 0)
+```
+
+And then you can estimate the same model, but exchanging the baseline category from "Democrat" (table above) to "Independent". So now the coefficient on "Republican" will be smaller, because the estimated magnitude is *relative to Independents*:
+
+```{r}
+(lm(motivated ~ factor(AGE8) +
+                democrat + republican,
+              data = exit %>% filter(!is.na(RUSSIA18))) %>%
+              summary() )
+```
 
 
 \pagebreak  
@@ -202,7 +214,6 @@ What are the key things to notice here?
 `tab FTVOTER1 sex`
 
 `tab party IMPEACH1, row nof`
-
 
 
 ## Part B:
@@ -226,3 +237,12 @@ It is important to note that:
 * Given that the values are unordered, then you *must* include a series of indicator/dummy variables.
 * One way to achieve that is to use the "i." operator.
 
+The "i." operator is a quick way to deal with categorical variables but, of course, you can create binary variables for each cateogry (minus 1, as you will not be including the baseline category in the model)
+
+You can run:
+
+`gen democrat = (party==1) if !missing(party)`
+
+`gen republican = (party==2) if !missing(party)`
+
+`reg motivated i.AGE8 democrat republican`
