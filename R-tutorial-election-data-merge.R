@@ -1,18 +1,19 @@
-
-# Repo with the dta:   https://github.com/favstats/USElection2020-NYT-Results
+# Repo with the election data:   https://github.com/favstats/USElection2020-NYT-Results
 
 V <- read_csv("https://raw.githubusercontent.com/favstats/USElection2020-NYT-Results/master/data/latest/presidential.csv")
 
-V <-  V %>% rename(county_fips = fips)
-
-V %>% 
-  filter(state %in% c("florida","illinois","michigan","pennsylvania","ohio","wisconsin","arizona","minnesota","georgia")) %>%
-  ggplot(aes(x=margin2016,y=margin2020)) + 
-  geom_point(size=.6) + 
-  facet_wrap(~state)
+# V <-  V %>% rename(county_fips = fips)
+V <-  V %>% mutate(county_fips = as.numeric(fips))
 
 
 cty_age_data <- read_csv("https://raw.githubusercontent.com/zilinskyjan/elections-and-voting/master/data-election-comparison/US-county-age-profiles-ACS2018.csv")
+#cty_age_data <- cty_age_data %>% rename(county_fips = FIPS)
+cty_age_data <-  cty_age_data %>% mutate(county_fips = as.numeric(FIPS))
+
+
+cty_covariates <- read_csv("https://raw.githubusercontent.com/zilinskyjan/R-stata-tutorials/master/data/US-county-demographics-2020.csv")
+cty_covariates <-  cty_covariates %>% rename(county_fips = fips)
+
 
 # A01001B_001 "Total Population:"
 # A01001B_002 "Total Population: More than 5 Years"
@@ -28,9 +29,8 @@ cty_age_data <- read_csv("https://raw.githubusercontent.com/zilinskyjan/election
 # A01001B_012 "Total Population: More than 85 Years"
 
 
-cty_age_data <- cty_age_data %>% rename(county_fips = FIPS)
-
-data <- left_join(cty_age_data,V,by="county_fips")
+data_temp <- left_join(cty_age_data,V,by="county_fips")
+data <- left_join(data_temp,cty_covariates,by="county_fips")
 
 
 data <- data %>%
@@ -46,6 +46,13 @@ data <- data  %>%
   mutate(trump_perc = results_trumpd/votes*100,
          biden_perc = results_bidenj/votes*100,
          biden_2P_voteshare = biden_perc / (biden_perc+trump_perc) * 100)
+
+
+data %>% 
+  filter(state %in% c("florida","illinois","michigan","pennsylvania","ohio","wisconsin","arizona","minnesota","georgia")) %>%
+  ggplot(aes(x=margin2016,y=margin2020)) + 
+  geom_point(size=.6) + 
+  facet_wrap(~state)
 
 
 data %>% 
@@ -136,4 +143,14 @@ elex %>% filter(!is.na(winner_comp)) %>%
   labs(x = "Population over 65 (%)", y = "Biden two-party vote share (%)") +
   geom_point(size=.6) + 
   facet_wrap(~winner_comp) 
+
+elex %>% filter(!is.na(winner_comp)) %>%
+  ggplot(aes(x=perc_65plus,y=perc_college_grad)) + 
+  labs(x = "Population over 65 (%)", y = "% college graduates") +
+  geom_point(size=.15,alpha=.6) + 
+  facet_wrap(~winner_comp) 
+
+
+
+
 
