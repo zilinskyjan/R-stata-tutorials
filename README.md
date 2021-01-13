@@ -35,8 +35,9 @@ A less serious issue is that you have the freedom to choose from many functions 
 
 **R**: There are many ways to accomplish the same objective with R. This choice proliferation is not always a blessing. For example:
 
-  	- Readings someone else's code, you may not always catch what exactly people are using (a tibble? a data.frame? a model.matrix object?) when they are estimating their models. 
-  	- You will see a lot of generic functions: people will write `predict()` and feed into it a LASSO model or an RF model, so what's really being activated under the hood would be `predict.glmnet()` or `predict.ranger()` and they allow, or expect, different things. So if you think you know what arguments are expected or allowed inside a common function like `predict()`, you will be disappointed.
+* Readings someone else's code, you may not always catch what exactly people are using (a tibble? a data.frame? a model.matrix object?) when they are estimating their models. 
+
+* You will see a lot of generic functions: people will write `predict()` and feed into it a LASSO model or an RF model, so what's really being activated under the hood would be `predict.glmnet()` or `predict.ranger()` and they allow, or expect, different things. So if you think you know what arguments are expected or allowed inside a common function like `predict()`, you will be disappointed.
 
 ### Building and recoding datasets
 
