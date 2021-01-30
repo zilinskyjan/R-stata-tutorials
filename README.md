@@ -1,6 +1,11 @@
 # R-stata-tutorials
 Teaching materials for a set of NYU methods demos
 
+Useful translation documents:
+
+* [Dictionary: Stata to R](https://github.com/EconometricsBySimulation/RStata/wiki/Dictionary:-Stata-to-R)
+* [Getting Started in R~Stata](http://www.princeton.edu/~otorres/RStata.pdf)
+
 ---
 
 # Should I choose R or STATA?
